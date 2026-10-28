@@ -1,4 +1,6 @@
-# Paradise Nursery Shopping Application
+# e-plantShopping
+
+## Paradise Nursery Shopping Application
 
 A simple React and Redux shopping cart application for Paradise Nursery, an online plant shop.
 

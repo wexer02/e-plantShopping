@@ -2,6 +2,27 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addItem } from './CartSlice.jsx';
 
+export function Navbar() {
+  const cart = useSelector(state => state.cart.items);
+  const totalQuantity = cart.reduce((total, item) => total + item.quantity, 0);
+  const navigateTo = page => { window.location.hash = page; window.scrollTo(0, 0); };
+  const handleHomeClick = event => { event.preventDefault(); navigateTo('home'); };
+  const handlePlantsClick = event => { event.preventDefault(); navigateTo('plants'); };
+  const handleCartClick = event => { event.preventDefault(); navigateTo('cart'); };
+  return <header className="navbar">
+    <a className="brand" href="#home" onClick={handleHomeClick}>🌿 Paradise Nursery</a>
+    <nav aria-label="Main navigation">
+      <a href="#home" onClick={handleHomeClick}>Home</a>
+      <a href="#plants" onClick={handlePlantsClick}>Plants</a>
+      <a href="#cart" onClick={handleCartClick} className="cart-link" aria-label={`Cart, ${totalQuantity} items`}>
+        <svg className="cart-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M2 3h3l3 12h11l3-9H6"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+        Cart <span className="badge" aria-live="polite">{totalQuantity}</span>
+      </a>
+    </nav>
+  </header>;
+}
+
+
 // Self-contained plant illustration thumbnails work without an external image service.
 function plantImage(name, index, flowering) {
   const green = ['#34754b', '#43845c', '#2c6543', '#648f43', '#397857', '#6f9950'][index % 6];
@@ -36,24 +57,25 @@ const groups = [
     ['String of Pearls', 18, 'Distinctive bead-like trailing foliage.']
   ] }
 ];
-export const products = groups.map((group, groupIndex) => ({ ...group, plants: group.plants.map(([name, price, description], index) => ({ id: `${groupIndex}-${index}`, name, price, description, image: plantImage(name, groupIndex * 6 + index, groupIndex === 1) })) }));
+export const products = groups.map((group, groupIndex) => ({ ...group, plants: group.plants.map(([name, price, description], index) => ({ id: `${groupIndex}-${index}`, name, price, cost: price, description, image: plantImage(name, groupIndex * 6 + index, groupIndex === 1) })) }));
 
 export default function ProductList() {
   const dispatch = useDispatch();
   const items = useSelector(state => state.cart.items);
-  return <main className="shop"><h1>Find your next green companion</h1><p className="intro">18 houseplants. Three collections. A little something for every home.</p>
-    {products.map(group => <section className="category" key={group.category}>
+  const addedToCart = Object.fromEntries(items.map(item => [item.name, true]));
+  const handleAddToCart = plant => dispatch(addItem(plant));
+  return <><Navbar /><main className="shop"><h1>Find your next green companion</h1><p className="intro">18 houseplants. Three collections. A little something for every home.</p>
+    {products.map(group => <section className="product-list" key={group.category}>
       <h2>{group.category}</h2><div className="product-grid">
         {group.plants.map(plant => {
-          const added = items.some(item => item.id === plant.id);
           return <article className="product-card" key={plant.id}>
             <img src={plant.image} alt={`${plant.name} illustration`} loading="lazy" width="200" height="190" />
             <div className="product-info"><h3>{plant.name}</h3><p>{plant.description}</p><strong>${plant.price.toFixed(2)}</strong>
-              <button onClick={() => dispatch(addItem(plant))} disabled={added}>{added ? 'Added to Cart' : 'Add to Cart'}</button>
+              <button onClick={() => handleAddToCart(plant)} disabled={addedToCart[plant.name]}>{addedToCart[plant.name] ? 'Added to Cart' : 'Add to Cart'}</button>
             </div>
           </article>;
         })}
       </div>
     </section>)}
-  </main>;
+  </main></>;
 }
